@@ -1,14 +1,15 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Layout from "../components/Layout.jsx";
-
+import axios from "axios";
+import { AuthContext } from "../components/trangThaiDangNhap.jsx";
 export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState("");
-
-  const handleLogin = (e) => {
+  const { login } = useContext(AuthContext);
+  const handleLogin = async (e) => {
     e.preventDefault();
 
     if (!email || !password) {
@@ -16,9 +17,23 @@ export default function Login() {
       return;
     }
 
-    setMsg("");
-    alert(`Đăng nhập thành công!\nEmail: ${email}`);
-    navigate("/dashboard");
+    try {
+      const res = await axios.post("http://localhost:5000/api/users/login", {
+        email,
+        password,
+      });
+
+      // LƯU TOKEN VÀ USER
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("user", JSON.stringify(res.data.user));
+      login(res.data.token);
+      setMsg("");
+      navigate("/BeNuoi"); // điều hướng sang giao diện bể nuôi
+    } catch (error) {
+      setMsg(
+        error.response?.data?.message || "Đăng nhập thất bại, thử lại!"
+      );
+    }
   };
 
   return (
