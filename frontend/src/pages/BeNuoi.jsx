@@ -159,7 +159,7 @@ export default function BeNuoi() {
                 <tr>
                   <th className="py-3 px-4 text-center">STT</th>
                   <th className="py-3 px-4">Tên bể</th>
-                  <th className="py-3 px-4 text-center">Loại</th>
+                  <th className="py-3 px-4 text-center">Loại lươn</th>
                   <th className="py-3 px-4 text-center">Dung tích (L)</th>
                   <th className="py-3 px-4">Vị trí</th>
                   <th className="py-3 px-4 text-center">Thao tác</th>
@@ -216,7 +216,7 @@ export default function BeNuoi() {
                 <>
                   <h2 className="text-2xl font-bold mb-4 text-blue-600">Chi tiết bể</h2>
                   <p><strong>Tên bể:</strong> {selectedTank.name}</p>
-                  <p><strong>Loại:</strong> {selectedTank.type}</p>
+                  <p><strong>Loại lươn:</strong> {selectedTank.type}</p>
                   <p><strong>Dung tích:</strong> {selectedTank.size} L</p>
                   <p><strong>Vị trí:</strong> {selectedTank.location}</p>
                   <button
@@ -236,7 +236,7 @@ export default function BeNuoi() {
                   </h2>
                   <form onSubmit={handleSubmit} className="space-y-3">
                     <input type="text" name="name" placeholder="Tên bể" value={form.name} onChange={handleChange} className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400" required/>
-                    <input type="text" name="type" placeholder="Loại" value={form.type} onChange={handleChange} className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400" required/>
+                    <input type="text" name="type" placeholder="Loại lươn" value={form.type} onChange={handleChange} className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400" required/>
                     <input type="number" name="size" placeholder="Dung tích (L)" value={form.size} onChange={handleChange} className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400" required/>
                     <input type="text" name="location" placeholder="Vị trí" value={form.location} onChange={handleChange} className="w-full border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400" required/>
 

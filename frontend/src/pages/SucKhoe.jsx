@@ -204,6 +204,7 @@ export default function HealthLogManager() {
                   <th className="py-3 px-4">Thuốc/Phương pháp</th>
                   <th className="py-3 px-4 text-center">Tỉ lệ sống sót (%)</th>
                   <th className="py-3 px-4 text-center">Thời gian ghi nhận</th>
+                  <th className="py-3 px-4">Ghi chú</th>
                   <th className="py-3 px-4 text-center">Thao tác</th>
                 </tr>
               </thead>
@@ -216,6 +217,7 @@ export default function HealthLogManager() {
                     <td className="py-3 px-4">{log.medicine || '---'}</td>
                     <td className="py-3 px-4 text-center">{log.survivalRate || log.survivalRate === 0 ? `${log.survivalRate}%` : '---'}</td>
                     <td className="py-3 px-4 text-center">{formatDateTime(log.recordedAt)}</td>
+                    <td className="py-3 px-4 text-sm">{log.notes || '---'}</td> 
                     <td className="py-3 px-4 flex justify-center gap-2">
                       <button
                         onClick={() => openPopup("view", log)}
