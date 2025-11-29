@@ -6,7 +6,7 @@ const spendingLogSchema = new mongoose.Schema({
   tankId: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: "Tank", 
-    required: [true, "Vui lòng chọn bể nuôi cần chi"] 
+    default: null // Cho phép null nếu là thu nhập chung
   },
 
   // 2. Lí do chi (Ví dụ: Sửa máy bơm, Mua ống nước, Thay bạt...)

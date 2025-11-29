@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import Layout from "../components/Layout";
 
-export default function SpendingLogManager() {
+export default function IncomeLogManager() {
   // --- Cấu hình API ---
-  const API_SPENDING = "http://localhost:5000/api/NhatKyChi"; // Giữ nguyên theo code của bạn
+  const API_INCOME = "http://localhost:5000/api/NhatKyThu"; // Đảm bảo khớp route server
   const API_TANK = "http://localhost:5000/api/tank";
   const token = localStorage.getItem("token");
 
@@ -20,8 +20,8 @@ export default function SpendingLogManager() {
   // Form State
   const [form, setForm] = useState({
     tankId: "",
-    reason: "",
-    totalCost: "",
+    source: "", // Nguồn thu
+    totalIncome: "", // Tổng thu
     note: "",
     date: new Date().toISOString().split('T')[0],
   });
@@ -46,7 +46,8 @@ export default function SpendingLogManager() {
     const { name, value } = e.target;
     let processedValue = value;
 
-    if (name === "totalCost") {
+    // Ép kiểu số cho tiền thu
+    if (name === "totalIncome") {
       processedValue = value === "" ? "" : Number(value);
     }
 
@@ -71,13 +72,13 @@ export default function SpendingLogManager() {
   const fetchLogs = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(API_SPENDING, {
+      const res = await axios.get(API_INCOME, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setLogs(res.data);
     } catch (err) {
-      console.error("Lỗi lấy nhật ký chi:", err);
-      alert("Lỗi khi tải dữ liệu nhật ký chi");
+      console.error("Lỗi lấy nhật ký thu:", err);
+      alert("Lỗi khi tải dữ liệu nhật ký thu");
     } finally {
       setLoading(false);
     }
@@ -95,17 +96,17 @@ export default function SpendingLogManager() {
 
     if (record) {
       setForm({
-        tankId: record.tankId?._id || record.tankId || "", // Null -> Chuỗi rỗng
-        reason: record.reason,
-        totalCost: record.totalCost,
+        tankId: record.tankId?._id || record.tankId || "", // Nếu null thì về chuỗi rỗng (Thu nhập chung)
+        source: record.source,
+        totalIncome: record.totalIncome,
         note: record.note || "",
         date: formatDateForInput(record.date),
       });
     } else {
       setForm({
         tankId: "",
-        reason: "",
-        totalCost: "",
+        source: "",
+        totalIncome: "",
         note: "",
         date: new Date().toISOString().split('T')[0],
       });
@@ -123,22 +124,21 @@ export default function SpendingLogManager() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Lưu ý: Không bắt buộc chọn tankId nếu là chi phí chung
-    
+    // Đối với thu nhập, tankId có thể để trống (null) nếu là thu nhập chung
     const dataToSend = { 
         ...form, 
-        totalCost: Number(form.totalCost),
-        tankId: form.tankId || null // Nếu rỗng thì gửi null (Chi phí chung)
+        totalIncome: Number(form.totalIncome),
+        tankId: form.tankId || null // Chuyển chuỗi rỗng thành null
     };
 
     try {
       if (popupType === "edit") {
-        await axios.put(`${API_SPENDING}/${selectedRecord._id}`, dataToSend, {
+        await axios.put(`${API_INCOME}/${selectedRecord._id}`, dataToSend, {
           headers: { Authorization: `Bearer ${token}` },
         });
         alert("Cập nhật thành công");
       } else {
-        await axios.post(API_SPENDING, dataToSend, {
+        await axios.post(API_INCOME, dataToSend, {
           headers: { Authorization: `Bearer ${token}` },
         });
         alert("Thêm mới thành công");
@@ -154,7 +154,7 @@ export default function SpendingLogManager() {
   // --- Delete ---
   const handleDelete = async () => {
     try {
-      await axios.delete(`${API_SPENDING}/${selectedRecord._id}`, {
+      await axios.delete(`${API_INCOME}/${selectedRecord._id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       alert("Xóa thành công");
@@ -171,12 +171,12 @@ export default function SpendingLogManager() {
       <div className="p-6">
         {/* HEADER */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-blue-600">Nhật Ký Chi Phí</h1>
+          <h1 className="text-3xl font-bold text-blue-600">Nhật Ký Thu Nhập</h1>
           <button
             onClick={() => openPopup("create")}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
           >
-            + Thêm Khoản Chi
+            + Thêm Khoản Thu
           </button>
         </div>
 
@@ -188,13 +188,13 @@ export default function SpendingLogManager() {
             <table className="w-full bg-white shadow-lg rounded-lg overflow-hidden">
               <thead className="bg-blue-500 text-white">
                 <tr>
-                  <th className="py-3 px-4 text-center w-[5%]">STT</th>
-                  <th className="py-3 px-4 text-center w-[20%]">Bể Nuôi</th>
-                  <th className="py-3 px-4 text-left w-[20%]">Lý do chi</th>
-                  <th className="py-3 px-4 text-right w-[15%]">Số tiền</th>
-                  <th className="py-3 px-4 text-center w-[15%]">Ngày chi</th>
-                  <th className="py-3 px-4 text-left w-[15%]">Ghi chú</th>
-                  <th className="py-3 px-4 text-center w-[10%]">Thao tác</th>
+                  <th className="py-3 px-4 text-center">STT</th>
+                  <th className="py-3 px-4 text-center">Bể Nuôi</th>
+                  <th className="py-3 px-4 text-center">Nguồn thu</th>
+                  <th className="py-3 px-4 text-center">Số tiền</th>
+                  <th className="py-3 px-4 text-center">Ngày thu</th>
+                  <th className="py-3 px-4 text-center">Ghi chú</th>
+                  <th className="py-3 px-4 text-center">Thao tác</th>
                 </tr>
               </thead>
               <tbody>
@@ -202,15 +202,16 @@ export default function SpendingLogManager() {
                   <tr key={log._id} className="border-b hover:bg-gray-100">
                     <td className="py-3 px-4 text-center">{index + 1}</td>
                     
-                    {/* Hiển thị Bể hoặc Chi phí chung */}
+                    {/* Nếu tankId null thì hiện Thu nhập chung */}
                     <td className="py-3 px-4 text-center font-medium">
-                        {log.tankId?.name || <span className="text-gray-500 italic">Chi phí chung</span>}
+                        {log.tankId?.name || <span className="text-gray-500 italic">Thu nhập chung</span>}
                     </td>
                     
-                    <td className="py-3 px-4 text-left">{log.reason}</td>
+                    <td className="py-3 px-4 text-center">{log.source}</td>
                     
-                    <td className="py-3 px-4 text-right font-bold text-red-600">
-                      {formatCurrency(log.totalCost)}
+                    {/* Số tiền màu XANH lá cây cho Thu nhập */}
+                    <td className="py-3 px-4 text-right font-bold text-green-600">
+                      {formatCurrency(log.totalIncome)}
                     </td>
                     
                     <td className="py-3 px-4 text-center">{formatDateForDisplay(log.date)}</td>
@@ -241,7 +242,7 @@ export default function SpendingLogManager() {
                 {logs.length === 0 && (
                   <tr>
                     <td colSpan="7" className="text-center p-4 text-gray-500">
-                      Chưa có khoản chi nào được ghi nhận.
+                      Chưa có khoản thu nào được ghi nhận.
                     </td>
                   </tr>
                 )}
@@ -258,12 +259,12 @@ export default function SpendingLogManager() {
               {/* --- VIEW --- */}
               {popupType === "view" && selectedRecord && (
                 <>
-                  <h2 className="text-2xl font-bold mb-4 text-blue-600">Chi tiết Khoản Chi</h2>
+                  <h2 className="text-2xl font-bold mb-4 text-blue-600">Chi tiết Khoản Thu</h2>
                   <div className="space-y-3 text-gray-700">
-                    <p><strong>Bể nuôi:</strong> {selectedRecord.tankId?.name || "Chi phí chung"}</p>
-                    <p><strong>Lý do chi:</strong> {selectedRecord.reason}</p>
-                    <p><strong>Số tiền:</strong> <span className="text-red-600 font-bold">{formatCurrency(selectedRecord.totalCost)}</span></p>
-                    <p><strong>Ngày chi:</strong> {formatDateForDisplay(selectedRecord.date)}</p>
+                    <p><strong>Bể nuôi:</strong> {selectedRecord.tankId?.name || "Thu nhập chung"}</p>
+                    <p><strong>Nguồn thu:</strong> {selectedRecord.source}</p>
+                    <p><strong>Số tiền:</strong> <span className="text-green-600 font-bold">{formatCurrency(selectedRecord.totalIncome)}</span></p>
+                    <p><strong>Ngày thu:</strong> {formatDateForDisplay(selectedRecord.date)}</p>
                     <p><strong>Ghi chú:</strong> {selectedRecord.note || "Không có"}</p>
                   </div>
                   <button 
@@ -279,10 +280,11 @@ export default function SpendingLogManager() {
               {(popupType === "create" || popupType === "edit") && (
                 <>
                   <h2 className="text-2xl font-bold mb-4 text-blue-600">
-                    {popupType === "create" ? "Thêm Khoản Chi Mới" : "Cập Nhật Khoản Chi"}
+                    {popupType === "create" ? "Thêm Khoản Thu Mới" : "Cập Nhật Khoản Thu"}
                   </h2>
                   <form onSubmit={handleSubmit} className="space-y-3">
                     
+                    {/* Chọn Bể - Có thêm option Thu nhập chung */}
                     <select
                       name="tankId"
                       value={form.tankId}
@@ -297,9 +299,9 @@ export default function SpendingLogManager() {
 
                     <input
                       type="text"
-                      name="reason"
-                      placeholder="Lý do chi (VD: Sửa máy bơm...)"
-                      value={form.reason}
+                      name="source"
+                      placeholder="Nguồn thu (VD: Bán lươn, Thanh lý...)"
+                      value={form.source}
                       onChange={handleChange}
                       className="w-full border px-3 py-2 rounded focus:ring-2 focus:ring-blue-400 outline-none"
                       required
@@ -307,9 +309,9 @@ export default function SpendingLogManager() {
 
                     <input
                       type="number"
-                      name="totalCost"
-                      placeholder="Tổng chi phí (VNĐ)"
-                      value={form.totalCost}
+                      name="totalIncome"
+                      placeholder="Tổng tiền thu (VNĐ)"
+                      value={form.totalIncome}
                       onChange={handleChange}
                       className="w-full border px-3 py-2 rounded focus:ring-2 focus:ring-blue-400 outline-none"
                       required
@@ -317,7 +319,7 @@ export default function SpendingLogManager() {
                     />
 
                     <div className="flex flex-col">
-                        <label className="text-sm text-gray-600 mb-1">Ngày chi:</label>
+                        <label className="text-sm text-gray-600 mb-1">Ngày thu:</label>
                         <input
                         type="date"
                         name="date"
@@ -359,9 +361,9 @@ export default function SpendingLogManager() {
               {/* --- CONFIRM DELETE --- */}
               {popupType === "delete" && selectedRecord && (
                 <>
-                  <h2 className="text-2xl font-bold mb-4 text-red-600">Xóa khoản chi?</h2>
+                  <h2 className="text-2xl font-bold mb-4 text-red-600">Xóa khoản thu?</h2>
                   <p className="mb-4 text-gray-700">
-                    Bạn có chắc muốn xóa khoản chi: <strong>{selectedRecord.reason}</strong> cho <strong>{selectedRecord.tankId?.name || "Chi phí chung"}</strong> với số tiền <strong>{formatCurrency(selectedRecord.totalCost)}</strong>?
+                    Bạn có chắc muốn xóa khoản thu: <strong>{selectedRecord.source}</strong> với số tiền <strong>{formatCurrency(selectedRecord.totalIncome)}</strong>?
                   </p>
                   <div className="flex space-x-3">
                     <button
