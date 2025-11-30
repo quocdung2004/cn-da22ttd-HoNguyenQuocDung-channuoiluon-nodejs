@@ -1,14 +1,31 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect, createContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Layout from "../components/Layout.jsx";
 import axios from "axios";
-import { AuthContext } from "../components/trangThaiDangNhap.jsx";
+
+// ⚠️ KHI CHẠY DỰ ÁN THẬT: Bỏ chú thích 2 dòng dưới và xóa các phần giả lập bên dưới
+import Layout from "../components/Layout.jsx";
+import { AuthContext } from "../components/trangThaiDangNhap.jsx"; 
+
+
+
 export default function Login() {
   const navigate = useNavigate();
+
+  // 1. Lấy biến isLoggedIn từ Context
+  const { login, isLoggedIn } = useContext(AuthContext);
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState("");
-  const { login } = useContext(AuthContext);
+
+  // 2. TỰ ĐỘNG CHUYỂN HƯỚNG NẾU ĐÃ ĐĂNG NHẬP
+  useEffect(() => {
+    if (isLoggedIn) {
+      // Dùng replace: true để người dùng không bấm Back quay lại trang login được
+      navigate("/BeNuoi", { replace: true });
+    }
+  }, [isLoggedIn, navigate]);
+
   const handleLogin = async (e) => {
     e.preventDefault();
 
@@ -26,15 +43,25 @@ export default function Login() {
       // LƯU TOKEN VÀ USER
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
+
+      // Cập nhật trạng thái vào Context
       login(res.data.token);
+
       setMsg("");
-      navigate("/BeNuoi"); // điều hướng sang giao diện bể nuôi
+      // Không cần gọi navigate ở đây nữa vì useEffect ở trên sẽ tự chạy khi isLoggedIn đổi thành true
+
     } catch (error) {
       setMsg(
         error.response?.data?.message || "Đăng nhập thất bại, thử lại!"
       );
     }
   };
+
+  // 3. NGĂN CHẶN HIỂN THỊ GIAO DIỆN LOGIN KHI ĐÃ ĐĂNG NHẬP
+  // Nếu đã đăng nhập, trả về null (màn hình trắng) trong tích tắc trước khi chuyển hướng
+  if (isLoggedIn) {
+    return null;
+  }
 
   return (
     <Layout>
@@ -94,3 +121,4 @@ export default function Login() {
     </Layout>
   );
 }
+
