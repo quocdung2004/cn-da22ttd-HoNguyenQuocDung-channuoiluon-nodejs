@@ -8,12 +8,14 @@ import NhatKyChi from "./pages/NhatKyChi.jsx";
 import NhatKyThu from "./pages/NhatKyThu.jsx";
 import SucKhoe from "./pages/SucKhoe.jsx";
 import TaiChinh from "./pages/TaiChinh.jsx";
+import GiongLuon from "./pages/GiongLuon.jsx";
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/GiongLuon" element={<GiongLuon />} />
         <Route path="/BeNuoi" element={<BeNuoi />} />
         <Route path="/MoiTruong" element={<MoiTruong />} />
         <Route path="/NhatKyChi" element={<NhatKyChi />} />

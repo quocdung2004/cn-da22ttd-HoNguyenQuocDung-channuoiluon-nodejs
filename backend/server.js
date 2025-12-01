@@ -10,6 +10,7 @@ const MoiTruong = require('./routes/MoiTruongRoutes');
 const NhatKyChi = require('./routes/NhatKyChiRoutes');
 const SucKhoe = require('./routes/SucKhoeRoutes');
 const NhatKyThu = require('./routes/NhatKyThuRoutes');
+const GiongLuon = require('./routes/GiongLuonRoutes');
 // Load env variables
 dotenv.config();
 connectDB();
@@ -29,7 +30,7 @@ app.use('/api/MoiTruong', MoiTruong);
 app.use('/api/NhatKyChi', NhatKyChi);
 app.use('/api/NhatKyThu', NhatKyThu);
 app.use('/api/SucKhoe', SucKhoe);
-
+app.use('/api/GiongLuon',GiongLuon);
 // ===== 404 - route không tồn tại =====
 app.use((req, res, next) => {
   res.status(404).json({ message: "Route không tồn tại" });

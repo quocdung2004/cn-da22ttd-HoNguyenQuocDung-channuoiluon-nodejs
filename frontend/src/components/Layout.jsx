@@ -22,6 +22,7 @@ export default function Layout({ children }) {
             {/* --- CÁC LINKS DÀNH CHO NGƯỜI DÙNG ĐÃ ĐĂNG NHẬP --- */}
             {isLoggedIn ? (
               <>
+                <Link to="/GiongLuon" className="mr-4 hover:underline">Giống lươn</Link>
                 <Link to="/BeNuoi" className="mr-4 hover:underline">Bể nuôi</Link>
                 <Link to="/MoiTruong" className="mr-4 hover:underline">Môi Trường</Link>
                 <Link to="/NhatKyChi" className="mr-4 hover:underline">Nhật ký chi</Link>
