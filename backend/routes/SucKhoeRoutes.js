@@ -10,12 +10,16 @@ const {
 
 const { protect } = require("../middleware/authMiddleware");
 
+// Bảo vệ tất cả các routes (Yêu cầu đăng nhập)
 router.use(protect);
 
-router.post("/", createHealthLog);
-router.get("/", getHealthLogs);
-router.get("/:id", getHealthLogById);
-router.put("/:id", updateHealthLog);
-router.delete("/:id", deleteHealthLog);
+router.route("/")
+  .post(createHealthLog) // Tạo mới
+  .get(getHealthLogs);   // Lấy danh sách
+
+router.route("/:id")
+  .get(getHealthLogById)    // Xem chi tiết
+  .put(updateHealthLog)     // Cập nhật
+  .delete(deleteHealthLog); // Xóa
 
 module.exports = router;

@@ -7,10 +7,13 @@ const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/db');
 const beNuoiRoutes = require('./routes/BeNuoiRoutes');
 const MoiTruong = require('./routes/MoiTruongRoutes');
-const NhatKyChi = require('./routes/NhatKyChiRoutes');
 const SucKhoe = require('./routes/SucKhoeRoutes');
-const NhatKyThu = require('./routes/NhatKyThuRoutes');
 const GiongLuon = require('./routes/GiongLuonRoutes');
+const Thuoc = require('./routes/ThuocRoutes');
+const ThucAn = require('./routes/ThucAnRoutes');
+const NhatKyChoAn = require('./routes/NhatKyChoAnRoutes');
+const ChiPhiVanHanh = require('./routes/ChiPhiVanHanhRoutes');
+const XuatBan = require('./routes/XuatBanRoutes');
 // Load env variables
 dotenv.config();
 connectDB();
@@ -27,10 +30,13 @@ app.use(helmet());       // bảo mật headers
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/tank', beNuoiRoutes);
 app.use('/api/MoiTruong', MoiTruong);
-app.use('/api/NhatKyChi', NhatKyChi);
-app.use('/api/NhatKyThu', NhatKyThu);
 app.use('/api/SucKhoe', SucKhoe);
 app.use('/api/GiongLuon',GiongLuon);
+app.use('/api/Thuoc', Thuoc);
+app.use('/api/ThucAn', ThucAn);
+app.use('/api/NhatKyChoAn', NhatKyChoAn);
+app.use('/api/ChiPhiVanHanh', ChiPhiVanHanh);
+app.use('/api/XuatBan', XuatBan);
 // ===== 404 - route không tồn tại =====
 app.use((req, res, next) => {
   res.status(404).json({ message: "Route không tồn tại" });

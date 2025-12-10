@@ -23,13 +23,15 @@ export default function Layout({ children }) {
             {isLoggedIn ? (
               <>
                 <Link to="/GiongLuon" className="mr-4 hover:underline">Giống lươn</Link>
+                <Link to="/Thuoc" className="mr-4 hover:underline">Thuốc</Link>
+                <Link to="/ThucAn" className="mr-4 hover:underline">Thức ăn</Link>
                 <Link to="/BeNuoi" className="mr-4 hover:underline">Bể nuôi</Link>
                 <Link to="/MoiTruong" className="mr-4 hover:underline">Môi Trường</Link>
-                <Link to="/NhatKyChi" className="mr-4 hover:underline">Nhật ký chi</Link>
-                <Link to="/NhatKyThu" className="mr-4 hover:underline">Nhật ký thu</Link>
                 <Link to="/SucKhoe" className="mr-4 hover:underline">Sức khỏe</Link>
-                <Link to="/TaiChinh" className="mr-4 hover:underline">Tài chính</Link>
-
+                <Link to="/ChiPhiVanHanh" className="mr-4 hover:underline">Chi phí vận hành</Link>
+                <Link to="/NhatKyChoAn" className="mr-4 hover:underline">Nhật ký cho ăn</Link>
+                <Link to="/XuatBan" className="mr-4 hover:underline">Xuất bán</Link>
+                <Link to="/TaiChinh" className="mr-4 hover:underline">Quản lý tài chính</Link>
                 {/* Nút Đăng xuất */}
                 <button
                   onClick={handleLogoutConfirmation} // <-- Đã thay đổi hàm gọi
