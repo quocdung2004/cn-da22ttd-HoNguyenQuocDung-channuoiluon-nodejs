@@ -12,6 +12,7 @@ import ThucAn from "./pages/ThucAn.jsx";
 import NhatKyChoAn from "./pages/NhatKyChoAn.jsx";
 import ChiPhiVanHanh from "./pages/ChiPhiVanHanh.jsx";
 import XuatBan from "./pages/XuatBan.jsx";
+import Dashboard from "./pages/Dashboard.jsx";
 function App() {
   return (
     <BrowserRouter>
@@ -28,6 +29,7 @@ function App() {
         <Route path="/NhatKyChoAn" element={<NhatKyChoAn />} />
         <Route path="/ChiPhiVanHanh" element={<ChiPhiVanHanh />} />
         <Route path="/XuatBan" element={<XuatBan />} />
+        <Route path="/Dashboard" element={<Dashboard />} />
       </Routes>
     </BrowserRouter>
   );

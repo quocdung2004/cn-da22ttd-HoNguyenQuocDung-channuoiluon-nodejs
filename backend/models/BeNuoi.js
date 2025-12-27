@@ -6,10 +6,6 @@ const tankSchema = new mongoose.Schema({
     required: [true, "Tên bể không được để trống"], 
     trim: true 
   },
-
-  // ⚠️ ĐÃ SỬA: Loại lươn không còn bắt buộc (required) nữa.
-  // Nó sẽ được Controller tự động cập nhật khi bạn thả giống vào.
-  // Mặc định là chuỗi rỗng hoặc "Trống".
   type: { 
     type: String, 
     default: "" 

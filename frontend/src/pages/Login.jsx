@@ -20,7 +20,7 @@ export default function Login() {
   useEffect(() => {
     if (isLoggedIn) {
       // Dùng replace: true để người dùng không bấm Back quay lại trang login được
-      navigate("/BeNuoi", { replace: true });
+      navigate("/Dashboard", { replace: true });
     }
   }, [isLoggedIn, navigate]);
 

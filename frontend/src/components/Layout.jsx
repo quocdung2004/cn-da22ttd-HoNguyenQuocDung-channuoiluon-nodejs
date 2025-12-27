@@ -55,7 +55,8 @@ export default function Layout({ children }) {
 
   // Danh sách menu đã được phân nhóm
   const menuGroups = [
-    {
+    {items: [{ path: "/Dashboard", label: "Tổng quan", icon: <LayoutDashboard size={20} /> }]},
+    {        
       title: "Hạ tầng & Đầu vào",
       items: [
         { path: "/BeNuoi", label: "Quản lý Bể nuôi", icon: <LayoutDashboard size={20} /> },
