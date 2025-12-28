@@ -1,0 +1,46 @@
+services:
+  # 1. MongoDB
+  mongo:
+    image: mongo:latest
+    container_name: aquaeel_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  # 2. Backend (Node.js)
+  server:
+    build: ./backend
+    container_name: aquaeel_server
+    ports:
+      - "5000:5000"
+    environment:
+      - MONGO_URI=mongodb+srv://doAnChuyenNganh:1235789Qd6321@cluster0.hfhzjpi.mongodb.net/?appName=Cluster0
+      - PORT=5000
+      - JWT_SECRET=supersecretkey
+    # --- PHẦN QUAN TRỌNG ĐỂ HOT RELOAD ---
+    volumes:
+      - ./backend:/app           # Ánh xạ thư mục code vào trong Docker
+      - /app/node_modules        # Giữ lại thư mục node_modules của Docker (không bị đè)
+    depends_on:
+      - mongo
+
+  # 3. Frontend (React/Vite)
+  client:
+    build: ./frontend
+    container_name: aquaeel_client
+    ports:
+      - "5173:5173"
+    environment:
+      # Sửa lại URL API để gọi tới tên service backend trong mạng docker
+      # Nhưng vì browser chạy ở ngoài, nên gọi localhost:5000 vẫn ok nếu đã map port
+      - VITE_API_URL=http://localhost:5000/api
+    # --- PHẦN QUAN TRỌNG ĐỂ HOT RELOAD ---
+    volumes:
+      - ./frontend:/app          # Ánh xạ thư mục code
+      - /app/node_modules        # Giữ node_modules của Docker
+    depends_on:
+      - server
+
+volumes:
+  mongo_data:

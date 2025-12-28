@@ -1,0 +1,15 @@
+/* src/index.css */
+
+/* Tailwind base styles */
+@tailwind base;
+
+/* Tailwind components (nếu có custom components) */
+@tailwind components;
+
+/* Tailwind utilities */
+@tailwind utilities;
+
+/* --- Bạn có thể thêm CSS tùy chỉnh ở đây --- */
+body {
+  font-family: 'Inter', sans-serif;
+}
