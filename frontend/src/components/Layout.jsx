@@ -14,6 +14,7 @@ import {
   Truck,
   DollarSign,
   Pill,
+  Home,
   MessageSquare,
   Send,
   Bot,
@@ -55,7 +56,7 @@ export default function Layout({ children }) {
 
   // Danh sách menu đã được phân nhóm
   const menuGroups = [
-    {items: [{ path: "/Dashboard", label: "Tổng quan", icon: <LayoutDashboard size={20} /> }]},
+    {items: [{ path: "/", label: "Tổng quan (Dashboard)", icon: <Home size={20} /> } ]},
     {        
       title: "Hạ tầng & Đầu vào",
       items: [
