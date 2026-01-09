@@ -254,7 +254,7 @@ export default function FinanceManager() {
                     <h2 className="text-3xl font-bold text-red-600 mt-2">{formatCurrency(financeStats.totalCost)}</h2>
                     <div className="mt-3 text-xs text-gray-400 flex flex-wrap gap-2">
                        <span>📦 Kho: {(( (financeStats.costBreakdown.food + financeStats.costBreakdown.medicine)/financeStats.totalCost)*100 || 0).toFixed(0)}%</span>
-                       <span>🌱 Giống: {((financeStats.costBreakdown.seed/financeStats.totalCost)*100 || 0).toFixed(0)}%</span>
+                       <span> Con giống: {((financeStats.costBreakdown.seed/financeStats.totalCost)*100 || 0).toFixed(0)}%</span>
                     </div>
                   </div>
                   <div className={`bg-white p-6 rounded-xl shadow-sm border-l-4 ${financeStats.netProfit >= 0 ? 'border-blue-500' : 'border-yellow-500'}`}>
