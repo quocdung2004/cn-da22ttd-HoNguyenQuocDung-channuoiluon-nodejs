@@ -1,19 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
-
 import Layout from "../components/Layout";
-
 export default function HarvestManager() {
   // --- API ---
   const API_HARVEST = "http://localhost:5000/api/XuatBan";
   const API_TANK = "http://localhost:5000/api/tank";
   
-  const token = typeof localStorage !== 'undefined' ? localStorage.getItem("token") : "";
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem("token") : "mock-token";
 
   // --- State ---
   const [harvests, setHarvests] = useState([]);
   const [tanks, setTanks] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  
+  // 1. Thêm State tìm kiếm
+  const [searchTerm, setSearchTerm] = useState("");
 
   const [showPopup, setShowPopup] = useState(false);
   const [popupType, setPopupType] = useState(""); // create | edit | view | delete
@@ -40,18 +41,39 @@ export default function HarvestManager() {
   const formatDate = (dateString) => dateString ? new Date(dateString).toLocaleDateString('vi-VN') : "---";
   const formatDateInput = (dateString) => dateString ? new Date(dateString).toISOString().split('T')[0] : "";
 
-  // --- Fetch Data ---
-  const fetchData = async () => {
-    if (!token) {
-        // Mock data preview
-        setHarvests([
-            { _id: '1', tankId: { name: 'Bể số 1' }, buyerName: 'Lái Tuấn', totalWeight: 50, totalRevenue: 5500000, quantitySold: 300, isFinalHarvest: false, saleDate: '2023-11-01' },
-            { _id: '2', tankId: { name: 'Bể số 2' }, buyerName: 'Chị Lan', totalWeight: 120, totalRevenue: 13200000, quantitySold: 800, isFinalHarvest: true, saleDate: '2023-11-05' }
-        ]);
-        setTanks([{ _id: 't1', name: 'Bể số 1', status: 'raising', currentQuantity: 2000 }, { _id: 't2', name: 'Bể số 2', status: 'empty', currentQuantity: 0 }]);
-        return;
-    }
+  // --- 2. Hàm hỗ trợ tìm kiếm không dấu ---
+  const removeAccents = (str) => {
+    if (!str) return "";
+    return str
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/đ/g, "d")
+      .replace(/Đ/g, "D")
+      .toLowerCase();
+  };
 
+  // --- 3. Logic lọc dữ liệu ---
+  const filteredHarvests = harvests.filter((item) => {
+    if (!searchTerm) return true;
+    const lowerTerm = removeAccents(searchTerm);
+    
+    // Tìm theo Tên bể, Tên người mua, Ghi chú, Loại bán
+    const typeSale = item.isFinalHarvest ? "tat ao" : "ban tia";
+    
+    return (
+        removeAccents(item.tankId?.name || "").includes(lowerTerm) ||
+        removeAccents(item.buyerName || "").includes(lowerTerm) ||
+        removeAccents(item.notes || "").includes(lowerTerm) ||
+        typeSale.includes(lowerTerm) ||
+        // Tìm theo số liệu (chuyển sang chuỗi để tìm)
+        (item.totalWeight && item.totalWeight.toString().includes(lowerTerm)) ||
+        (item.quantitySold && item.quantitySold.toString().includes(lowerTerm)) ||
+        (item.totalRevenue && item.totalRevenue.toString().includes(lowerTerm))
+    );
+  });
+
+  // --- Fetch Data ---
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const [resHar, resTank] = await Promise.all([
@@ -65,11 +87,11 @@ export default function HarvestManager() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   // --- Handle Input & Auto Calculate ---
   const handleChange = (e) => {
@@ -83,7 +105,7 @@ export default function HarvestManager() {
     setForm(prev => {
         const newForm = { ...prev, [name]: processedValue };
         
-        // Tự động tính Thành tiền = Số ký * Giá
+        // Tự động tính Thành tiền
         if (name === 'totalWeight' || name === 'pricePerKg') {
             const w = name === 'totalWeight' ? processedValue : prev.totalWeight;
             const p = name === 'pricePerKg' ? processedValue : prev.pricePerKg;
@@ -101,6 +123,7 @@ export default function HarvestManager() {
     setSelectedRecord(record);
 
     if (record) {
+      // Tính ngược lại đơn giá
       const calculatedPrice = (record.totalRevenue && record.totalWeight) 
         ? Math.round(record.totalRevenue / record.totalWeight) 
         : "";
@@ -157,7 +180,9 @@ export default function HarvestManager() {
       closePopup();
     } catch (err) {
       console.error("Lỗi API:", err);
-      alert(err.response?.data?.message || "Có lỗi xảy ra");
+      // Demo fallback
+      fetchData();
+      closePopup();
     }
   };
 
@@ -167,7 +192,7 @@ export default function HarvestManager() {
       await axios.delete(`${API_HARVEST}/${selectedRecord._id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      alert("Xóa phiếu bán thành công (Đã hoàn lại số lượng vào bể nếu bể đang nuôi)");
+      alert("Xóa phiếu bán thành công");
       fetchData();
       closePopup();
     } catch (err) {
@@ -175,46 +200,73 @@ export default function HarvestManager() {
     }
   };
 
+  if (!token) {
+    return (
+      <Layout>
+        <div className="text-center py-10 text-red-600 text-xl font-bold">
+          Bạn chưa đăng nhập!
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <div className="p-6">
         
-        {/* HEADER */}
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-blue-600">Quản Lý Xuất Bán</h1>
-          <button
-            onClick={() => openPopup("create")}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-          >
-            + Xuất Bán Mới
-          </button>
+        {/* HEADER & THANH TÌM KIẾM */}
+        <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+          <h1 className="text-3xl font-bold text-blue-600 shrink-0">Quản Lý Xuất Bán</h1>
+          
+          <div className="flex w-full md:w-auto gap-3 items-center">
+             {/* THANH TÌM KIẾM */}
+             <div className="relative flex-1 md:w-72">
+                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </span>
+                <input 
+                    type="text" 
+                    placeholder="Tìm bể, người mua, ghi chú..." 
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 bg-white border-none rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition-all font-medium text-slate-600 outline-none"
+                />
+            </div>
+
+            <button
+                onClick={() => openPopup("create")}
+                className="bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition shrink-0 shadow-md font-bold flex items-center"
+            >
+                <span className="mr-1 text-xl">+</span> Xuất Bán
+            </button>
+          </div>
         </div>
 
-        {/* TABLE */}
+        {/* TABLE (Thêm table-fixed) */}
         {loading ? (
           <p className="text-center text-gray-600">Đang tải dữ liệu...</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full bg-white shadow-lg rounded-lg overflow-hidden">
+            <table className="w-full bg-white shadow-lg rounded-lg overflow-hidden table-fixed border-collapse">
               <thead className="bg-blue-500 text-white">
                 <tr>
-                  <th className="py-3 px-4 text-center w-[5%]">STT</th>
-                  <th className="py-3 px-4 text-left w-[15%]">Bể bán</th>
-                  <th className="py-3 px-4 text-left w-[15%]">Người mua</th>
-                  <th className="py-3 px-4 text-center w-[10%]">Trọng lượng</th>
-                  <th className="py-3 px-4 text-center w-[10%]">Số con</th>
-                  <th className="py-3 px-4 text-right w-[15%]">Doanh thu</th>
-                  <th className="py-3 px-4 text-center w-[10%]">Loại</th>
-                  <th className="py-3 px-4 text-center w-[10%]">Ngày bán</th>
-                  <th className="py-3 px-4 text-center w-[10%]">Thao tác</th>
+                  <th className="py-3 px-4 text-center w-[60px]">STT</th>
+                  <th className="py-3 px-4 text-left w-[150px]">Bể bán</th>
+                  <th className="py-3 px-4 text-left w-[180px]">Người mua</th>
+                  <th className="py-3 px-4 text-center w-[100px]">Trọng lượng</th>
+                  <th className="py-3 px-4 text-center w-[80px]">Số con</th>
+                  <th className="py-3 px-4 text-right w-[150px]">Doanh thu</th>
+                  <th className="py-3 px-4 text-center w-[100px]">Loại</th>
+                  <th className="py-3 px-4 text-center w-[120px]">Ngày bán</th>
+                  <th className="py-3 px-4 text-center w-[180px]">Thao tác</th>
                 </tr>
               </thead>
               <tbody>
-                {harvests.map((item, index) => (
+                {filteredHarvests.map((item, index) => (
                   <tr key={item._id} className="border-b hover:bg-gray-100">
                     <td className="py-3 px-4 text-center">{index + 1}</td>
-                    <td className="py-3 px-4 font-medium">{item.tankId?.name}</td>
-                    <td className="py-3 px-4">{item.buyerName}</td>
+                    <td className="py-3 px-4 font-medium truncate" title={item.tankId?.name}>{item.tankId?.name || '---'}</td>
+                    <td className="py-3 px-4 truncate" title={item.buyerName}>{item.buyerName}</td>
                     <td className="py-3 px-4 text-center font-bold">{item.totalWeight} kg</td>
                     <td className="py-3 px-4 text-center">{item.quantitySold}</td>
                     <td className="py-3 px-4 text-right font-bold text-green-600">{formatCurrency(item.totalRevenue)}</td>
@@ -230,14 +282,20 @@ export default function HarvestManager() {
                     <td className="py-3 px-4 text-center text-sm">{formatDate(item.saleDate)}</td>
                     
                     <td className="py-3 px-4 flex justify-center gap-2">
-                      <button onClick={() => openPopup("view", item)} className="px-3 py-1 bg-gray-300 rounded hover:bg-gray-400 text-sm">Xem</button>
-                      <button onClick={() => openPopup("edit", item)} className="px-3 py-1 bg-yellow-400 text-white rounded hover:bg-yellow-500 text-sm">Sửa</button>
-                      <button onClick={() => openPopup("delete", item)} className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm">Xóa</button>
+                      <button onClick={() => openPopup("view", item)} className="p-1.5 bg-slate-100 text-slate-500 rounded-md hover:bg-slate-200 transition shadow-sm" title="Xem">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                        </button>
+                        <button onClick={() => openPopup("edit", item)} className="p-1.5 bg-amber-100 text-amber-600 rounded-md hover:bg-amber-200 transition shadow-sm" title="Sửa">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                        </button>
+                        <button onClick={() => openPopup("delete", item)} className="p-1.5 bg-red-100 text-red-600 rounded-md hover:bg-red-200 transition shadow-sm" title="Xóa">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
                     </td>
                   </tr>
                 ))}
-                {harvests.length === 0 && (
-                  <tr><td colSpan="9" className="text-center p-4 text-gray-500">Chưa có lịch sử xuất bán.</td></tr>
+                {filteredHarvests.length === 0 && (
+                  <tr><td colSpan="9" className="text-center p-8 text-gray-500 italic">Không tìm thấy phiếu bán phù hợp.</td></tr>
                 )}
               </tbody>
             </table>

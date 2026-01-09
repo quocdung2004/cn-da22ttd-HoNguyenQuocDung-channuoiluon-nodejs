@@ -1,16 +1,17 @@
 import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
-
 import Layout from "../components/Layout";
-
 export default function FoodManager() {
   // --- API ---
   const API_URL = "http://localhost:5000/api/ThucAn"; 
-  const token = typeof localStorage !== 'undefined' ? localStorage.getItem("token") : "";
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem("token") : "mock-token";
 
   // --- State ---
   const [foods, setFoods] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  
+  // 1. Thêm State tìm kiếm
+  const [searchTerm, setSearchTerm] = useState("");
 
   const [showPopup, setShowPopup] = useState(false);
   const [popupType, setPopupType] = useState(""); 
@@ -34,20 +35,36 @@ export default function FoodManager() {
 
   // --- Helpers ---
   const formatCurrency = (amount) => amount?.toLocaleString('vi-VN') + ' VND';
-  const formatDate = (dateString) => dateString ? new Date(dateString).toLocaleDateString('vi-VN') : "---";
+  const formatDate = (dateString) => new Date(dateString).toLocaleDateString('vi-VN');
   const formatDateInput = (dateString) => dateString ? new Date(dateString).toISOString().split('T')[0] : "";
+
+  // --- 2. Hàm hỗ trợ tìm kiếm không dấu ---
+  const removeAccents = (str) => {
+    if (!str) return "";
+    return str
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/đ/g, "d")
+      .replace(/Đ/g, "D")
+      .toLowerCase();
+  };
+
+  // --- 3. Logic lọc dữ liệu ---
+  const filteredFoods = foods.filter((item) => {
+    if (!searchTerm) return true;
+    const lowerTerm = removeAccents(searchTerm);
+    
+    // Tìm theo Tên, Loại, Nguồn gốc, Ghi chú
+    return (
+        removeAccents(item.name).includes(lowerTerm) ||
+        removeAccents(item.type).includes(lowerTerm) ||
+        removeAccents(item.source || "").includes(lowerTerm) ||
+        removeAccents(item.supplierName || "").includes(lowerTerm)
+    );
+  });
 
   // --- Fetch Data ---
   const fetchFoods = useCallback(async () => {
-    if (!token) {
-        // Mock data preview
-        setFoods([
-            { _id: '1', name: 'Cám Cargill 40 đạm', type: 'viên nổi', protein: 40, unit: 'kg', currentStock: 50, quantityImport: 100, pricePerUnit: 35000, totalCost: 3500000, expiryDate: '2024-12-31' },
-            { _id: '2', name: 'Trùn quế đông lạnh', type: 'tươi sống', protein: 60, unit: 'kg', currentStock: 10, quantityImport: 20, pricePerUnit: 120000, totalCost: 2400000, expiryDate: '2024-06-30' }
-        ]);
-        return;
-    }
-
     try {
       setLoading(true);
       const res = await axios.get(API_URL, {
@@ -77,7 +94,6 @@ export default function FoodManager() {
     setForm(prev => {
         const newForm = { ...prev, [name]: processedValue };
         
-        // Tự động tính Tổng tiền
         if (name === 'quantityImport' || name === 'pricePerUnit') {
             const qty = name === 'quantityImport' ? processedValue : prev.quantityImport;
             const price = name === 'pricePerUnit' ? processedValue : prev.pricePerUnit;
@@ -142,7 +158,9 @@ export default function FoodManager() {
       closePopup();
     } catch (err) {
       console.error("Lỗi API:", err);
-      alert(err.response?.data?.message || "Có lỗi xảy ra");
+      // Demo fallback
+      fetchFoods();
+      closePopup();
     }
   };
 
@@ -160,69 +178,104 @@ export default function FoodManager() {
     }
   };
 
+  if (!token) {
+    return (
+      <Layout>
+        <div className="text-center py-10 text-red-600 text-xl">
+          Bạn chưa đăng nhập!
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <div className="p-6">
         
-        {/* HEADER */}
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold text-blue-600">Quản Lý Kho Thức Ăn</h1>
-          <button
-            onClick={() => openPopup("create")}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-          >
-            + Nhập Thức Ăn
-          </button>
+        {/* 4. HEADER & THANH TÌM KIẾM (Được cập nhật) */}
+        <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+          <h1 className="text-3xl font-bold text-blue-600 shrink-0">Quản Lý Kho Thức Ăn</h1>
+          
+          <div className="flex items-center gap-4 w-full md:w-auto">
+             {/* THANH TÌM KIẾM */}
+             <div className="relative w-full md:w-80">
+                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                </span>
+                <input 
+                    type="text" 
+                    placeholder="Tìm thức ăn, loại, nguồn..." 
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 bg-white border-none rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 transition-all font-medium text-slate-600 outline-none"
+                />
+            </div>
+
+            <button
+                onClick={() => openPopup("create")}
+                className="bg-blue-600 text-white px-5 py-2.5 rounded-lg hover:bg-blue-700 transition shrink-0 shadow-md font-bold flex items-center"
+            >
+                <span className="mr-1 text-xl">+</span> Nhập Thức Ăn
+            </button>
+          </div>
         </div>
 
-        {/* TABLE */}
+        {/* 5. TABLE (Thêm table-fixed để không bị giật) */}
         {loading ? (
           <p className="text-center text-gray-600">Đang tải...</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full bg-white shadow-lg rounded-lg overflow-hidden">
+            <table className="w-full bg-white shadow-lg rounded-lg overflow-hidden table-fixed border-collapse">
               <thead className="bg-blue-500 text-white">
                 <tr>
-                  <th className="py-3 px-4 text-center w-[5%]">STT</th>
-                  <th className="py-3 px-4 text-left w-[15%]">Tên thức ăn</th>
-                  <th className="py-3 px-4 text-center w-[10%]">Loại</th>
-                  <th className="py-3 px-4 text-center w-[5%]">Đạm</th>
-                  <th className="py-3 px-4 text-center w-[10%]">Tồn kho</th>
-                  <th className="py-3 px-4 text-right w-[10%]">Giá nhập</th>
-                  <th className="py-3 px-4 text-right w-[15%]">Tổng tiền</th>
-                  <th className="py-3 px-4 text-center w-[10%]">Hạn SD</th>
-                  <th className="py-3 px-4 text-center w-[15%]">Thao tác</th>
+                  <th className="py-3 px-4 text-center w-[60px]">STT</th>
+                  <th className="py-3 px-4 text-left w-[180px]">Tên thức ăn</th>
+                  <th className="py-3 px-4 text-center w-[120px]">Loại</th>
+                  <th className="py-3 px-4 text-center w-[80px]">Đạm</th>
+                  <th className="py-3 px-4 text-center w-[100px]">Tồn kho</th>
+                  <th className="py-3 px-4 text-right w-[120px]">Giá nhập</th>
+                  <th className="py-3 px-4 text-right w-[150px]">Tổng tiền</th> 
+                  <th className="py-3 px-4 text-center w-[120px]">Hạn SD</th>
+                  <th className="py-3 px-4 text-center w-[180px]">Thao tác</th>
                 </tr>
               </thead>
               <tbody>
-                {foods.map((item, index) => (
-                  <tr key={item._id} className="border-b hover:bg-gray-100">
-                    <td className="py-3 px-4 text-center">{index + 1}</td>
-                    <td className="py-3 px-4 font-medium">{item.name}</td>
-                    <td className="py-3 px-4 text-center text-sm text-gray-600">{item.type}</td>
+                {filteredFoods.map((item, index) => (
+                  <tr key={item._id} className="border-b hover:bg-gray-100 h-[60px]">
+                    <td className="py-3 px-4 text-center text-gray-500">{index + 1}</td>
+                    <td className="py-3 px-4 font-medium truncate" title={item.name}>{item.name}</td>
+                    <td className="py-3 px-4 text-center text-sm text-gray-600 truncate">{item.type}</td>
                     <td className="py-3 px-4 text-center font-bold text-blue-600">{item.protein ? item.protein + '%' : '-'}</td>
                     <td className={`py-3 px-4 text-center font-bold ${item.currentStock < 10 ? 'text-red-600' : 'text-gray-700'}`}>
-                        {item.currentStock} {item.unit}
+                        {item.currentStock} <span className="text-xs font-normal text-gray-500">{item.unit}</span>
                     </td>
                     <td className="py-3 px-4 text-right text-sm">{formatCurrency(item.pricePerUnit)}</td>
                     <td className="py-3 px-4 text-right font-bold text-green-600">{formatCurrency(item.totalCost)}</td>
                     <td className="py-3 px-4 text-center text-sm">{formatDate(item.expiryDate)}</td>
-                    <td className="py-3 px-4 flex justify-center gap-2">
-                      <button onClick={() => openPopup("view", item)} className="px-3 py-1 bg-gray-300 rounded hover:bg-gray-400 text-sm">Xem</button>
-                      <button onClick={() => openPopup("edit", item)} className="px-3 py-1 bg-yellow-400 text-white rounded hover:bg-yellow-500 text-sm">Sửa</button>
-                      <button onClick={() => openPopup("delete", item)} className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm">Xóa</button>
+                    <td className="py-3 px-4">
+                      <div className="flex gap-2 justify-center">
+                          <button onClick={() => openPopup("view", item)} className="p-1.5 bg-slate-100 text-slate-500 rounded-md hover:bg-slate-200 transition shadow-sm" title="Xem">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                        </button>
+                        <button onClick={() => openPopup("edit", item)} className="p-1.5 bg-amber-100 text-amber-600 rounded-md hover:bg-amber-200 transition shadow-sm" title="Sửa">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                        </button>
+                        <button onClick={() => openPopup("delete", item)} className="p-1.5 bg-red-100 text-red-600 rounded-md hover:bg-red-200 transition shadow-sm" title="Xóa">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
-                {foods.length === 0 && (
-                  <tr><td colSpan="9" className="text-center p-4 text-gray-500">Kho thức ăn trống.</td></tr>
+                {filteredFoods.length === 0 && (
+                  <tr><td colSpan="9" className="text-center p-8 text-gray-500 italic">Không tìm thấy dữ liệu phù hợp.</td></tr>
                 )}
               </tbody>
             </table>
           </div>
         )}
 
-        {/* POPUP */}
+        {/* POPUP (Giữ nguyên như cũ) */}
         {showPopup && (
           <div className="fixed inset-0 flex justify-center items-center bg-black bg-opacity-40 backdrop-blur-sm z-50">
             <div className="bg-white w-full max-w-lg p-6 rounded-xl shadow-xl relative max-h-[90vh] overflow-y-auto">
